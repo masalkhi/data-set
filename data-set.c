@@ -39,6 +39,7 @@
 #define MAP_PROT  (PROT_READ | PROT_WRITE)
 #define MAP_FLAGS (MAP_PRIVATE)
 
+
 #define eprintf(...) fprintf(stderr, __VA_ARGS__)
 
 
@@ -68,8 +69,13 @@ struct mem_map * create_mem_map(char *filename, size_t struct_size,
 		perror("error");
 		goto close_file;
 	}
+	
 	file_size = info.st_size;
-
+	if (!file_size) {
+		eprintf("error: %s file is empty\n", filename);
+		goto close_file;
+	}
+	
         row = mmap(NULL, file_size, MAP_PROT, MAP_FLAGS, fd, 0);
 	if (row == MAP_FAILED) {
 		perror("error");
@@ -78,7 +84,7 @@ struct mem_map * create_mem_map(char *filename, size_t struct_size,
 
         line = strtok_r(row, "\n", &saveptr);
 	if(!line) {
-		eprintf("error: %s file is empty\n", filename);
+		eprintf("error: %s file contains no data\n", filename);
 		goto unmap_file;
 	}
 
