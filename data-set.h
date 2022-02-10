@@ -52,8 +52,9 @@
 #define __get_entry(ptr, type, member)					\
 	((type *)((ptr) - offsetof(type, member)))
 
+
 #ifdef __GNUC__
-# define MP_DATA_SIZE   (0)
+# define MP_DATA_SIZE   (0u)
 # define data_entry(ptr) __extension__					\
 	({								\
 		__typeof__(*ptr) *__ptr = (ptr);			\
@@ -61,9 +62,10 @@
 		__get_entry(__ptr, struct mem_map, data);		\
 	})
 #else
-# define MP_DATA_SIZE   (1)
+# define MP_DATA_SIZE   (1u)
 # define data_entry(ptr) __get_entry(ptr, struct mem_map, data)
 #endif /* __GNUC__ */
+
 
 struct mem_map {
 	size_t maped_size;       // it would be used with munmap
@@ -93,6 +95,7 @@ static __always_inline void destroy_mem_map(struct mem_map * mem)
 	munmap(mem, mem->maped_size);
 }
 
+
 /**
  * destroy_data_set - to destroy a data set created with create_data_set
  * @ptr: the pointer which returned from create_data_set function
@@ -108,10 +111,12 @@ static __always_inline void destroy_data_set(void *ptr)
 	destroy_mem_map(data_entry((unsigned char *)ptr));
 }
 
+
 /**
  * create_data_set - to create a data set
  * @filename: the csv file name that contains the data
- * @struct_size: the size of the structure, that would contain a decoded line
+ * @struct_size: the size of the structure, that would be used to store 
+ *        data from a csv line
  * @parser: function pointer to the function that would be called on each
  *        line in the file, it takes 3 params, a line from the csv file 
  *        terminated with \0 (the \n is omitted), a pointer to a buffer of 
@@ -160,6 +165,7 @@ static __always_inline size_t get_total_items(void *ptr)
 #undef __align
 #undef __get_entry
 #undef data_entry
+#undef MP_DATA_SIZE
 
 
 #endif /* !__DATA_SET_H__ */
