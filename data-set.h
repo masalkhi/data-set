@@ -33,51 +33,57 @@
 # include <cstddef>
 #endif
 
+#undef __align
+
 #ifdef __GNUC__
 # define __attribute__(...)  __attribute__(__VA_ARGS__)
-# define __extension__  __extension__
+# define __extension__       __extension__
+# define __align(arg)        __attribute__((aligned(arg)))
 #else
 # define __attribute__(...)
 # define __extension__
+# define __align(arg)
 #endif
 
 #ifndef __always_inline
 # define __always_inline inline __attribute__((always_inline))
 #endif
 
-#undef __align
-#define __align(arg) __attribute__((aligned(arg)))
-
-
 #define __get_entry(ptr, type, member)					\
 	((type *)((ptr) - offsetof(type, member)))
 
-#define data_entry(ptr) __extension__					\
+#ifdef __GNUC__
+# define MP_DATA_SIZE   (0)
+# define data_entry(ptr) __extension__					\
 	({								\
-		__typeof__(*(struct mem_map){0}.data) *__ptr = (ptr);	\
-		(void)((ptr) == (struct mem_map){0}.data);		\
+		__typeof__(*ptr) *__ptr = (ptr);			\
+		(void)(__ptr == (struct mem_map){0}.data);		\
 		__get_entry(__ptr, struct mem_map, data);		\
 	})
-
+#else
+# define MP_DATA_SIZE   (1)
+# define data_entry(ptr) __get_entry(ptr, struct mem_map, data)
+#endif /* __GNUC__ */
 
 struct mem_map {
 	size_t maped_size;       // it would be used with munmap
 	size_t items;            // the number of the element in the set
-	__extension__  __align(64) unsigned char data[0];
+	__extension__  __align(64) unsigned char data[MP_DATA_SIZE];
 };
 
 
 #ifndef __cplusplus
-struct mem_map * creat_mem_map(char *filename, size_t struct_size,
-			       int parser(const char *, void *, void *),
-			       void *);
+struct mem_map * create_mem_map(char *filename, size_t struct_size,
+				int parser(const char *, void *, void *),
+				void *);
 #else
 extern "C" {
-	struct mem_map * creat_mem_map(char *filename, size_t struct_size,
-				       int parser(const char *, void *, void *)
-				       void *);
+	struct mem_map * create_mem_map(char *filename, size_t struct_size,
+					int parser(const char *, void *, void *)
+					void *);
 }
 #endif /* !__cplusplus */
+
 
 static __always_inline void destroy_mem_map(struct mem_map * mem)
 {
@@ -88,11 +94,11 @@ static __always_inline void destroy_mem_map(struct mem_map * mem)
 }
 
 /**
- * destroy_data_set - to destroy a data set
+ * destroy_data_set - to destroy a data set created with create_data_set
  * @ptr: the pointer which returned from create_data_set function
  *
- * NOTE: use always this function to destroy the data-set and do not try to 
- * free the memory by yourself
+ * NOTE: use always this function to destroy the data-set that is created 
+ * with create_data_set and do not try to free the memory by yourself
  */
 static __always_inline void destroy_data_set(void *ptr)
 {
@@ -105,19 +111,18 @@ static __always_inline void destroy_data_set(void *ptr)
 /**
  * create_data_set - to create a data set
  * @filename: the csv file name that contains the data
- * @struct_size: the size of the structure, that would contain decoded line
+ * @struct_size: the size of the structure, that would contain a decoded line
  * @parser: function pointer to the function that would be called on each
- *        line in file, it takes 3 params, a line from the csv file terminated 
- *        with \0 (the \n is omitted), a pointer to a buffer of the size 
- *        struct_size, and a priv_data. the function most return integer 0 on 
- *        on success, and a non-zero value on failure.
+ *        line in the file, it takes 3 params, a line from the csv file 
+ *        terminated with \0 (the \n is omitted), a pointer to a buffer of 
+ *        the size struct_size, and a priv_data. the function most return 
+ *        integer 0 on on success, and a non-zero value on failure.
  * @priv_data: a pointer that will be passed to the parser, it can be NULL
- *        or an address of a private struct.
+ *        or an address to a private struct.
  *
  * It returns a pointer to the fisrt element in the set, or NULL if parser
  * returns a non-zero value or on failure and a message printed to stderr.
  */
-
 static __always_inline void * create_data_set(char *filename,
 					      size_t struct_size,
 					      int parser(const char *,
@@ -125,8 +130,8 @@ static __always_inline void * create_data_set(char *filename,
 							 void *),
 					      void *priv_data)
 {
-        struct mem_map *mem = creat_mem_map(filename, struct_size, parser,
-					    priv_data);
+        struct mem_map *mem = create_mem_map(filename, struct_size, parser,
+					     priv_data);
 	if (!mem)
 		return NULL;
 	
@@ -152,6 +157,7 @@ static __always_inline size_t get_total_items(void *ptr)
 
 #undef __attribute__
 #undef __extension__
+#undef __align
 #undef __get_entry
 #undef data_entry
 
