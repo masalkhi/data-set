@@ -45,13 +45,16 @@
 # define __align(arg)
 #endif
 
+#ifndef __nonnull
+# define __nonnull(args) __attribute__((__nonnull__ args))
+#endif
+
 #ifndef __always_inline
 # define __always_inline inline __attribute__((always_inline))
 #endif
 
 #define __get_entry(ptr, type, member)					\
 	((type *)((ptr) - offsetof(type, member)))
-
 
 #ifdef __GNUC__
 # define MP_DATA_SIZE   (0u)
@@ -116,7 +119,7 @@ static __always_inline void destroy_data_set(void *ptr)
  * create_data_set - to create a data set
  * @filename: the csv file name that contains the data
  * @struct_size: the size of the structure, that would be used to store 
- *        data from a csv line
+ *        data from one csv line
  * @parser: function pointer to the function that would be called on each
  *        line in the file, it takes 3 params, a line from the csv file 
  *        terminated with \0 (the \n is omitted), a pointer to a buffer of 
@@ -127,13 +130,15 @@ static __always_inline void destroy_data_set(void *ptr)
  *
  * It returns a pointer to the fisrt element in the set, or NULL if parser
  * returns a non-zero value or on failure and a message printed to stderr.
+ *
+ * NOTE: if the filename or parser is NULL, a compiler warning will be 
+ * generated if -Wnonnull option is enabled and the compiler implements 
+ * gcc extensions.
  */
-static __always_inline void * create_data_set(char *filename,
-					      size_t struct_size,
-					      int parser(const char *,
-							 void *,
-							 void *),
-					      void *priv_data)
+static __always_inline __nonnull((1, 3))
+void * create_data_set(char *filename, size_t struct_size,
+		       int parser(const char *, void *, void *),
+		       void *priv_data)
 {
         struct mem_map *mem = create_mem_map(filename, struct_size, parser,
 					     priv_data);
