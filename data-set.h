@@ -33,6 +33,45 @@
 # include <cstddef>
 #endif
 
+
+/* from error 1 to 29, replace ERROR_DATA_SET_ with E and check in the men page
+ * of errno for the documentation */
+#define ERROR_DATA_SET_ACCES         (1u)
+#define ERROR_DATA_SET_DQUOT         (2u)
+#define ERROR_DATA_SET_EXIST         (3u)
+#define ERROR_DATA_SET_FAULT         (4u)
+#define ERROR_DATA_SET_FBIG          (5u)
+#define ERROR_DATA_SET_INTR          (6u)
+#define ERROR_DATA_SET_INVAL         (7u)
+#define ERROR_DATA_SET_ISDIR         (8u)
+#define ERROR_DATA_SET_LOOP          (9u)
+#define ERROR_DATA_SET_MFILE         (10u)
+#define ERROR_DATA_SET_NAMETOOLONG   (11u)
+#define ERROR_DATA_SET_NFILE         (12u)
+#define ERROR_DATA_SET_NODEV         (13u)
+#define ERROR_DATA_SET_NOENT         (14u)
+#define ERROR_DATA_SET_NOMEM         (15u)
+#define ERROR_DATA_SET_NOSPC         (16u)
+#define ERROR_DATA_SET_NOTDIR        (17u)
+#define ERROR_DATA_SET_NXIO          (18u)
+#define ERROR_DATA_SET_OPNOTSUPP     (19u)
+#define ERROR_DATA_SET_OVERFLOW      (20u)
+#define ERROR_DATA_SET_PERM          (21u)
+#define ERROR_DATA_SET_ROFS          (22u)
+#define ERROR_DATA_SET_TXTBSY        (23u)
+#define ERROR_DATA_SET_WOULDBLOCK    (24u)
+#define ERROR_DATA_SET_BADF          (25u)
+#define ERROR_DATA_SET_AGAIN         (26u) 
+#define ERROR_DATA_SET_SIGSEGV       (27u)
+#define ERROR_DATA_SET_SIGBUS        (28u)
+#define	ERROR_DATA_SET_ARGS          (29u)
+#define ERROR_DATA_SET_FSTAT         (30u)   /* the fstat function has fauild */
+#define ERROR_DATA_SET_FEMPTY        (31u)   /* the file is empty */
+#define ERROR_DATA_SET_FCORRUPT      (32u)   /* the file is corrupted */
+#define ERROR_DATA_SET_PARSER        (33u)   /* parser has returned non-zero */
+#define ERROR_DATA_SET               (34u)   /* the default error */
+
+
 #undef __align
 
 #ifdef __GNUC__
@@ -80,12 +119,12 @@ struct mem_map {
 #ifndef __cplusplus
 struct mem_map * create_mem_map(char *filename, size_t struct_size,
 				int parser(const char *, void *, void *),
-				void *);
+				void *, int *);
 #else
 extern "C" {
 	struct mem_map * create_mem_map(char *filename, size_t struct_size,
 					int parser(const char *, void *, void *)
-					void *);
+					void *, int *);
 }
 #endif /* !__cplusplus */
 
@@ -127,6 +166,7 @@ static __always_inline void destroy_data_set(void *ptr)
  *        integer 0 on on success, and a non-zero value on failure.
  * @priv_data: a pointer that will be passed to the parser, it can be NULL
  *        or an address to a private struct.
+ * @errp: a pointer to an int to save the error if one was encountered
  *
  * It returns a pointer to the fisrt element in the set, or NULL if parser
  * returns a non-zero value or on failure and a message printed to stderr.
@@ -138,10 +178,15 @@ static __always_inline void destroy_data_set(void *ptr)
 static __always_inline __nonnull((1, 3))
 void * create_data_set(char *filename, size_t struct_size,
 		       int parser(const char *, void *, void *),
-		       void *priv_data)
+		       void *priv_data, int *errp)
 {
-        struct mem_map *mem = create_mem_map(filename, struct_size, parser,
-					     priv_data);
+	int err;
+        struct mem_map *mem;
+
+	if (!errp)
+		errp = &err;
+	
+	mem = create_mem_map(filename, struct_size, parser, priv_data, errp);
 	if (!mem)
 		return NULL;
 	
