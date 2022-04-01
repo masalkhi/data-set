@@ -18,12 +18,22 @@
  *
  *****************************************************************************/
 
+/**
+ * @Description:
+ * The purpose of data-set project is to create a data set from a csv 
+ * file, the code is optimized for big csv files. Unnecessarily overhead, 
+ * such as the read and write syscalls overhead, are removed. If the 
+ * compiler implements GCC extensions, the first element guaranteed to 
+ * be 64 Byte aligned (on most platforms, that L1 cache line alignment)
+ *
+ * @auther: Abd-Alrhman Masalkhi
+ * @data: 2022
+ * 
+ */
+
 #ifndef __DATA_SET_H__
 #define __DATA_SET_H__
 
-#ifndef _DEFAULT_SOURCE
-# define _DEFAULT_SOURCE
-#endif
 
 #include <sys/mman.h>
 
@@ -72,40 +82,44 @@
 #define ERROR_DATA_SET               (34u)   /* the default error */
 
 
-#undef __align
-
 #ifdef __GNUC__
-# define __attribute__(...)  __attribute__(__VA_ARGS__)
 # define __extension__       __extension__
-# define __align(arg)        __attribute__((aligned(arg)))
+# define __attribute__(...)  __attribute__(__VA_ARGS__)
 #else
-# define __attribute__(...)
 # define __extension__
-# define __align(arg)
+# define __attribute__(...)
 #endif
+
+
+#undef __align
+#define __align(arg)     __attribute__((aligned(arg)))
+
 
 #ifndef __nonnull
 # define __nonnull(args) __attribute__((__nonnull__ args))
 #endif
 
+
 #ifndef __always_inline
 # define __always_inline inline __attribute__((always_inline))
 #endif
 
-#define __get_entry(ptr, type, member)					\
-	((type *)((ptr) - offsetof(type, member)))
 
-#ifdef __GNUC__
+#define __get_entry(ptr, type, member)					\
+	((type *)(((unsigned char *)ptr) - offsetof(type, member)))
+
+
+#ifndef __GNUC__
+# define MP_DATA_SIZE   (1u)
+# define data_entry(ptr) __get_entry(ptr, struct mem_map, data)
+#else
 # define MP_DATA_SIZE   (0u)
 # define data_entry(ptr) __extension__					\
 	({								\
-		__typeof__(*ptr) *__ptr = (ptr);			\
+	        __typeof__(*ptr) *__ptr = (ptr);			\
 		(void)(__ptr == (struct mem_map){0}.data);		\
 		__get_entry(__ptr, struct mem_map, data);		\
 	})
-#else
-# define MP_DATA_SIZE   (1u)
-# define data_entry(ptr) __get_entry(ptr, struct mem_map, data)
 #endif /* __GNUC__ */
 
 
@@ -116,17 +130,17 @@ struct mem_map {
 };
 
 
-#ifndef __cplusplus
+#ifdef __cplusplus
+extern "C" {
+#endif
+	
 struct mem_map * create_mem_map(char *filename, size_t struct_size,
 				int parser(const char *, void *, void *),
 				void *, int *);
-#else
-extern "C" {
-	struct mem_map * create_mem_map(char *filename, size_t struct_size,
-					int parser(const char *, void *, void *)
-					void *, int *);
+	
+#ifdef __cplusplus
 }
-#endif /* !__cplusplus */
+#endif
 
 
 static __always_inline void destroy_mem_map(struct mem_map * mem)
@@ -149,8 +163,8 @@ static __always_inline void destroy_data_set(void *ptr)
 {
 	if (!ptr)
 		return;
-	
-	destroy_mem_map(data_entry((unsigned char *)ptr));
+
+	destroy_mem_map(data_entry(ptr));
 }
 
 
@@ -169,7 +183,7 @@ static __always_inline void destroy_data_set(void *ptr)
  * @errp: a pointer to an int to save the error if one was encountered
  *
  * It returns a pointer to the fisrt element in the set, or NULL if parser
- * returns a non-zero value or on failure and a message printed to stderr.
+ * returns a non-zero value or on failure.
  *
  * NOTE: if the filename or parser is NULL, a compiler warning will be 
  * generated if -Wnonnull option is enabled and the compiler implements 
@@ -195,18 +209,18 @@ void * create_data_set(char *filename, size_t struct_size,
 
 
 /**
- * get_data_length - to get the number of the elements in the data set
+ * get_data_set_length - to get the number of the elements in the data set
  * @ptr: a pointer to the data set
  * 
  * NOTE: the ptr must be the pointer returned from create_data_set fucntion,
  * which is the pointer to the first element in the data set
  */
-static __always_inline size_t get_total_items(void *ptr)
+static __always_inline size_t get_data_set_length(void *ptr)
 {
 	if (!ptr)
 		return 0;
-	
-	return data_entry((unsigned char *)ptr)->items;
+
+	return data_entry(ptr)->items;
 }
 
 

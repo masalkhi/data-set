@@ -22,12 +22,12 @@
 # define _DEFAULT_SOURCE
 #endif
 
+
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
@@ -36,8 +36,7 @@
 #include "data-set.h"
 
 
-#define MAP_PROT  (PROT_READ | PROT_WRITE)
-#define MAP_FLAGS (MAP_PRIVATE)
+#define MAP_PROT (PROT_READ | PROT_WRITE)
 
 
 static int get_error(int err)
@@ -163,6 +162,11 @@ struct mem_map * create_mem_map(char *filename, size_t struct_size,
 	struct mem_map *mem;
 	size_t maped_size, file_size, line_size, items;
 
+	if (!errp)
+		errp = &err;
+	
+	*errp = 0;
+	
 	if (!filename || !struct_size || !parser) {
 		*errp = ERROR_DATA_SET_ARGS;
 		return NULL;
@@ -185,8 +189,10 @@ struct mem_map * create_mem_map(char *filename, size_t struct_size,
 	        *errp = ERROR_DATA_SET_FEMPTY;
 		goto close_file;
 	}
-	
-        row = mmap(NULL, file_size, MAP_PROT, MAP_FLAGS, fd, 0);
+
+	/* MAP_PRIVATE is set, we are using strtok_r on the mapped file and 
+	 * we want all changes be discarded */
+        row = mmap(NULL, file_size, MAP_PROT, MAP_PRIVATE, fd, 0);
 	if (row == MAP_FAILED) {
 		*errp = get_error(errno);
 		goto close_file;
@@ -194,7 +200,7 @@ struct mem_map * create_mem_map(char *filename, size_t struct_size,
 
         line = strtok_r(row, "\n", &saveptr);
 	if(!line) {
-	        *errp = ERROR_DATA_SET_FEMPTY;
+	        *errp = ERROR_DATA_SET_FCORRUPT;
 		goto unmap_file;
 	}
 
@@ -208,7 +214,7 @@ struct mem_map * create_mem_map(char *filename, size_t struct_size,
 	
 	maped_size = (items * struct_size) + sizeof(struct mem_map);
 	
-	mem = mmap(NULL, maped_size, MAP_PROT, MAP_FLAGS | MAP_ANON, -1, 0);
+	mem = mmap(NULL, maped_size, MAP_PROT, MAP_PRIVATE | MAP_ANON, -1, 0);
 	if (mem == MAP_FAILED) {
 		*errp = get_error(errno);
 		goto unmap_file;
@@ -224,6 +230,7 @@ struct mem_map * create_mem_map(char *filename, size_t struct_size,
 			*errp = ERROR_DATA_SET_PARSER;
 			goto unmap_data;
 		}
+		
 	        line = strtok_r(NULL, "\n", &saveptr);
 		ptr += struct_size;
 	}
