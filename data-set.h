@@ -1,22 +1,8 @@
-/******************************************************************************
+/*
+ * SPDX-License-Identifier: GPL-2.0
+ *
  * Copyright (C) 2022 by Abd-Alrhman Masalkhi
- *
- * This file is part of data-set.
- *
- *  data-set is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  data-set is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with data-set. If not, see <https://www.gnu.org/licenses/>. 
- *
- *****************************************************************************/
+ */
 
 /**
  * @Description:
@@ -46,62 +32,83 @@
 
 /* from error 1 to 29, replace ERROR_DATA_SET_ with E and check in the men page
  * of errno for the documentation */
-#define ERROR_DATA_SET_ACCES         (1u)
-#define ERROR_DATA_SET_DQUOT         (2u)
-#define ERROR_DATA_SET_EXIST         (3u)
-#define ERROR_DATA_SET_FAULT         (4u)
-#define ERROR_DATA_SET_FBIG          (5u)
-#define ERROR_DATA_SET_INTR          (6u)
-#define ERROR_DATA_SET_INVAL         (7u)
-#define ERROR_DATA_SET_ISDIR         (8u)
-#define ERROR_DATA_SET_LOOP          (9u)
-#define ERROR_DATA_SET_MFILE         (10u)
-#define ERROR_DATA_SET_NAMETOOLONG   (11u)
-#define ERROR_DATA_SET_NFILE         (12u)
-#define ERROR_DATA_SET_NODEV         (13u)
-#define ERROR_DATA_SET_NOENT         (14u)
-#define ERROR_DATA_SET_NOMEM         (15u)
-#define ERROR_DATA_SET_NOSPC         (16u)
-#define ERROR_DATA_SET_NOTDIR        (17u)
-#define ERROR_DATA_SET_NXIO          (18u)
-#define ERROR_DATA_SET_OPNOTSUPP     (19u)
-#define ERROR_DATA_SET_OVERFLOW      (20u)
-#define ERROR_DATA_SET_PERM          (21u)
-#define ERROR_DATA_SET_ROFS          (22u)
-#define ERROR_DATA_SET_TXTBSY        (23u)
-#define ERROR_DATA_SET_WOULDBLOCK    (24u)
-#define ERROR_DATA_SET_BADF          (25u)
-#define ERROR_DATA_SET_AGAIN         (26u) 
-#define ERROR_DATA_SET_SIGSEGV       (27u)
-#define ERROR_DATA_SET_SIGBUS        (28u)
-#define	ERROR_DATA_SET_ARGS          (29u)
-#define ERROR_DATA_SET_FSTAT         (30u)   /* the fstat function has fauild */
-#define ERROR_DATA_SET_FEMPTY        (31u)   /* the file is empty */
-#define ERROR_DATA_SET_FCORRUPT      (32u)   /* the file is corrupted */
-#define ERROR_DATA_SET_PARSER        (33u)   /* parser has returned non-zero */
-#define ERROR_DATA_SET               (34u)   /* the default error */
+#define ERROR_DATA_SET_ACCES         (1)
+#define ERROR_DATA_SET_DQUOT         (2)
+#define ERROR_DATA_SET_EXIST         (3)
+#define ERROR_DATA_SET_FAULT         (4)
+#define ERROR_DATA_SET_FBIG          (5)
+#define ERROR_DATA_SET_INTR          (6)
+#define ERROR_DATA_SET_INVAL         (7)
+#define ERROR_DATA_SET_ISDIR         (8)
+#define ERROR_DATA_SET_LOOP          (9)
+#define ERROR_DATA_SET_MFILE         (10)
+#define ERROR_DATA_SET_NAMETOOLONG   (11)
+#define ERROR_DATA_SET_NFILE         (12)
+#define ERROR_DATA_SET_NODEV         (13)
+#define ERROR_DATA_SET_NOENT         (14)
+#define ERROR_DATA_SET_NOMEM         (15)
+#define ERROR_DATA_SET_NOSPC         (16)
+#define ERROR_DATA_SET_NOTDIR        (17)
+#define ERROR_DATA_SET_NXIO          (18)
+#define ERROR_DATA_SET_OPNOTSUPP     (19)
+#define ERROR_DATA_SET_OVERFLOW      (20)
+#define ERROR_DATA_SET_PERM          (21)
+#define ERROR_DATA_SET_ROFS          (22)
+#define ERROR_DATA_SET_TXTBSY        (23)
+#define ERROR_DATA_SET_WOULDBLOCK    (24)
+#define ERROR_DATA_SET_BADF          (25)
+#define ERROR_DATA_SET_AGAIN         (26) 
+#define ERROR_DATA_SET_SIGSEGV       (27)
+#define ERROR_DATA_SET_SIGBUS        (28)
+#define	ERROR_DATA_SET_ARGS          (29)
+#define ERROR_DATA_SET_FEMPTY        (30)  /* the file is empty */
+#define ERROR_DATA_SET_FCORRUPT      (31)  /* the file is corrupted */
+#define ERROR_DATA_SET_PARSER        (32)  /* parser has returned non-zero */
+#define ERROR_DATA_SET               (33)  /* the default error */
 
 
 #ifdef __GNUC__
-# define __extension__       __extension__
-# define __attribute__(...)  __attribute__(__VA_ARGS__)
+#  define __extension__  __extension__
 #else
-# define __extension__
-# define __attribute__(...)
+#  define __extension__
 #endif
 
 
 #undef __align
-#define __align(arg)     __attribute__((aligned(arg)))
+#ifdef __has_attribute
+#  if __has_attribute (aligned)
+#    define __align(args) __attribute__((aligned(args)))
+#  else
+#    define __align(args)
+#  endif
+#else
+#  define __align(args)
+#endif
 
 
 #ifndef __nonnull
-# define __nonnull(args) __attribute__((__nonnull__ args))
+#  ifdef __has_attribute
+#    if __has_attribute (nonnull)
+#      define __nonnull(args) __attribute__((nonnull args))
+#    else
+#      define __nonnull(args)
+#    endif
+#  else
+#    define __nonnull(args)
+#  endif
 #endif
 
 
 #ifndef __always_inline
-# define __always_inline inline __attribute__((always_inline))
+#  ifdef __has_attribute
+#    if __has_attribute (always_inline)
+#      define __always_inline inline __attribute__((always_inline))
+#    else
+#      define __always_inline inline
+#    endif
+#  else
+#    define __always_inline inline
+#  endif
 #endif
 
 
@@ -110,23 +117,23 @@
 
 
 #ifndef __GNUC__
-# define MP_DATA_SIZE   (1u)
-# define data_entry(ptr) __get_entry(ptr, struct mem_map, data)
+#  define MEM_MAP_DATA_SIZE (1u)
+#  define data_entry(ptr) __get_entry(ptr, struct mem_map, data)
 #else
-# define MP_DATA_SIZE   (0u)
-# define data_entry(ptr) __extension__					\
+#  define MEM_MAP_DATA_SIZE (0u)
+#  define data_entry(ptr) __extension__					\
 	({								\
 	        __typeof__(*ptr) *__ptr = (ptr);			\
 		(void)(__ptr == (struct mem_map){0}.data);		\
 		__get_entry(__ptr, struct mem_map, data);		\
 	})
-#endif /* __GNUC__ */
+#endif
 
 
 struct mem_map {
 	size_t maped_size;       // it would be used with munmap
 	size_t items;            // the number of the element in the set
-	__extension__  __align(64) unsigned char data[MP_DATA_SIZE];
+	__extension__  __align(64) unsigned char data[MEM_MAP_DATA_SIZE];
 };
 
 

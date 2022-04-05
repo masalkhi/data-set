@@ -1,27 +1,12 @@
-/******************************************************************************
+/*
+ * SPDX-License-Identifier: GPL-2.0
+ *
  * Copyright (C) 2022 by Abd-Alrhman Masalkhi
- *
- * This file is part of data-set.
- *
- *  data-set is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  data-set is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with data-set. If not, see <https://www.gnu.org/licenses/>. 
- *
- *****************************************************************************/
+ */
 
 #ifndef _DEFAULT_SOURCE
 # define _DEFAULT_SOURCE
 #endif
-
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -34,7 +19,6 @@
 #include <errno.h>
 
 #include "data-set.h"
-
 
 #define MAP_PROT (PROT_READ | PROT_WRITE)
 
@@ -180,7 +164,7 @@ struct mem_map * create_mem_map(char *filename, size_t struct_size,
 
 	err = fstat(fd, &info);
 	if (err) {
-		*errp = ERROR_DATA_SET_FSTAT;
+		*errp = get_error(errno);
 		goto close_file;
 	}
 	
