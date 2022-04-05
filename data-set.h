@@ -61,10 +61,10 @@
 #define ERROR_DATA_SET_SIGSEGV       (27)
 #define ERROR_DATA_SET_SIGBUS        (28)
 #define	ERROR_DATA_SET_ARGS          (29)
-#define ERROR_DATA_SET_FEMPTY        (30)  /* the file is empty */
-#define ERROR_DATA_SET_FCORRUPT      (31)  /* the file is corrupted */
-#define ERROR_DATA_SET_PARSER        (32)  /* parser has returned non-zero */
-#define ERROR_DATA_SET               (33)  /* the default error */
+#define ERROR_DATA_SET_FEMPTY        (30)   /* the file is empty */
+#define ERROR_DATA_SET_FCORRUPT      (31)   /* the file is corrupted */
+#define ERROR_DATA_SET_PARSER        (32)   /* parser has returned non-zero */
+#define ERROR_DATA_SET               (33)   /* the default error */
 
 
 #ifdef __GNUC__
@@ -131,8 +131,8 @@
 
 
 struct mem_map {
-	size_t maped_size;       // it would be used with munmap
-	size_t items;            // the number of the element in the set
+	size_t maped_size;       /* it would be used with munmap */
+	size_t items;            /* the number of the element in the set */
 	__extension__  __align(64) unsigned char data[MEM_MAP_DATA_SIZE];
 };
 
@@ -231,12 +231,11 @@ static __always_inline size_t get_data_set_length(void *ptr)
 }
 
 
-#undef __attribute__
 #undef __extension__
 #undef __align
 #undef __get_entry
 #undef data_entry
-#undef MP_DATA_SIZE
+#undef MEM_MAP_DATA_SIZE
 
 
 #endif /* !__DATA_SET_H__ */
